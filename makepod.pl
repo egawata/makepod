@@ -6,8 +6,8 @@ use warnings;
 use File::ChangeNotify;
 use File::Spec::Functions;
 use File::Path qw(make_path);
-#use Pod::HtmlTree;
 use Pod::Simple::HTML;
+use Pod::Simple::HTMLBatch;
 use Cwd;
 use Getopt::Long;
 
@@ -27,41 +27,32 @@ GetOptions(
     'n|name=s'      => \$release_name,
 );
 
-@dirs = map { catdir($basedir, $_) } (split ':', $dirstr);
-@dirs or die "No watching directories specified";
+@dirs = split ':', $dirstr;
+@dirs or die "No watched directories specified";
+
+
+#  Make initial HTMLs.
+for ( @dirs ) {
+    my $ps = Pod::Simple::Search->new();
+    $ps->inc(0);
+    my $name2path = $ps->survey( catdir($basedir, $_) );
+    
+    for my $path ( values %$name2path ) {
+        make_html($path);
+    }
+}
+
 
 print "Start watching dir $dirstr ...\n\n";
 
 my $watcher = File::ChangeNotify->instantiate_watcher(
-                    directories     => \@dirs,
+                    directories     => [ map { catdir($basedir, $_) } @dirs ],
                     filter  => qr/\.(?:pm|pl)$/,
                 );
 
 while ( my @events = $watcher->wait_for_events() ) {
     for (@events) {
-        my $p = Pod::Simple::HTML->new;
-        $p->index(1);
-        $p->html_css($css);
-
-        my $path = $_->path();
-        print "File $path changed.\n";
-
-        my $html;
-        $p->output_string(\$html);
-        $p->parse_file($path);
-        
-        my $rel_path = $path;
-        $rel_path =~ s/^$basedir//;
-        my $outfile = catdir($outdir, $release_name, $rel_path);
-        $outfile =~ s/\.(pm|pl)$/.html/;
-
-        print "Outfile $outfile\n";
-        make_path_outfile($outfile);        
-
-        open my $OUT, '>', $outfile 
-            or die "Failed to open file $outfile : $!\n";
-        print $OUT $html;
-        close $OUT;
+        make_html($_->path());
     }
 
     print "Finished. (sleep 5 seconds)\n";
@@ -77,4 +68,30 @@ sub make_path_outfile {
 }
 
 
+sub make_html {
+    my ($path) = @_;
+
+    print "Processing $path ...\n";
+
+    my $p = Pod::Simple::HTML->new;
+    $p->index(1);
+    $p->html_css($css);
+
+    my $html;
+    $p->output_string(\$html);
+    $p->parse_file($path);
+    
+    my $rel_path = $path;
+    $rel_path =~ s/^$basedir//;
+    my $outfile = catdir($outdir, $release_name, $rel_path);
+    $outfile =~ s/\.(pm|pl)$/.html/;
+
+    print "Outfile $outfile\n";
+    make_path_outfile($outfile);        
+
+    open my $OUT, '>', $outfile 
+        or die "Failed to open file $outfile : $!\n";
+    print $OUT $html;
+    close $OUT;
+}
 
