@@ -10,7 +10,9 @@ use Pod::Simple::HTML;
 use Pod::Simple::HTMLBatch;
 use Cwd;
 use Getopt::Long;
+use HTML::Entities;
 
+$Pod::Simple::HTML::Content_decl = q{<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">};
 
 my $basedir = getcwd();
 my $dirstr = 'lib';
@@ -91,7 +93,7 @@ sub make_html {
 
     open my $OUT, '>', $outfile 
         or die "Failed to open file $outfile : $!\n";
-    print $OUT $html;
+    print $OUT decode_entities($html);
     close $OUT;
 }
 
