@@ -11,6 +11,7 @@ use Pod::Simple::HTMLBatch;
 use Cwd;
 use Getopt::Long;
 use HTML::Entities;
+use Data::Dumper;
 
 $Pod::Simple::HTML::Content_decl = q{<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">};
 
@@ -38,6 +39,7 @@ for ( @dirs ) {
     my $ps = Pod::Simple::Search->new();
     $ps->inc(0);
     my $name2path = $ps->survey( catdir($basedir, $_) );
+    print Dumper($name2path);
     
     for my $path ( values %$name2path ) {
         make_html($path);
@@ -53,8 +55,11 @@ my $watcher = File::ChangeNotify->instantiate_watcher(
                 );
 
 while ( my @events = $watcher->wait_for_events() ) {
-    for (@events) {
-        make_html($_->path());
+    
+    my %map = map { $_->path => 1 } grep { $_->type =~ m/^(create|modify)$/ } @events;
+    my @paths = keys %map;
+    for (@paths) {
+        make_html($_);
     }
 
     print "Finished. (sleep 5 seconds)\n";
