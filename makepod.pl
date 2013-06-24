@@ -3,15 +3,30 @@
 use strict;
 use warnings;
 
+
+use File::Spec;
+
+my $libpath;
+
+BEGIN {
+    my $thisfile = readlink(__FILE__) || __FILE__ ;
+    $libpath  = ( File::Spec->splitpath($thisfile) )[1];
+    $libpath = File::Spec->catdir( $libpath, 'lib' );
+    print "$libpath\n";
+    $libpath =~ s{/$}{};
+}
+
+use lib $libpath;
+
 use File::ChangeNotify;
-use File::Spec::Functions;
 use File::Path qw(make_path);
-use Pod::Simple::HTML;
-use Pod::Simple::HTMLBatch;
 use Cwd;
 use Getopt::Long;
 use HTML::Entities;
 use Data::Dumper;
+use AutoP2H::Pod;
+use Pod::Simple::Search;
+
 
 $Pod::Simple::HTML::Content_decl = q{<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">};
 
@@ -38,8 +53,7 @@ GetOptions(
 for ( @dirs ) {
     my $ps = Pod::Simple::Search->new();
     $ps->inc(0);
-    my $name2path = $ps->survey( catdir($basedir, $_) );
-    print Dumper($name2path);
+    my $name2path = $ps->survey( File::Spec->catdir($basedir, $_) );
     
     for my $path ( values %$name2path ) {
         make_html($path);
@@ -50,7 +64,7 @@ for ( @dirs ) {
 print "Start watching dir $dirstr ...\n\n";
 
 my $watcher = File::ChangeNotify->instantiate_watcher(
-                    directories     => [ map { catdir($basedir, $_) } @dirs ],
+                    directories     => [ map { File::Spec->catdir($basedir, $_) } @dirs ],
                     filter  => qr/\.(?:pm|pl)$/,
                 );
 
@@ -80,9 +94,10 @@ sub make_html {
 
     print "Processing $path ...\n";
 
-    my $p = Pod::Simple::HTML->new;
+    my $p = AutoP2H::Pod->new;
     $p->index(1);
     $p->html_css($css);
+    $p->pod_top( File::Spec->catfile($outdir, 'index.html') );
 
     my $html;
     $p->output_string(\$html);
@@ -90,7 +105,7 @@ sub make_html {
     
     my $rel_path = $path;
     $rel_path =~ s/^$basedir//;
-    my $outfile = catdir($outdir, $release_name, $rel_path);
+    my $outfile = File::Spec->catdir($outdir, $release_name, $rel_path);
     $outfile =~ s/\.(pm|pl)$/.html/;
 
     print "Outfile $outfile\n";
