@@ -97,18 +97,26 @@ sub make_html {
     my $p = AutoP2H::Pod->new;
     $p->index(1);
     $p->html_css($css);
-    $p->pod_top( File::Spec->catfile($outdir, 'index.html') );
+
+    my $rel_path = $path;
+    $rel_path =~ s/^$basedir//;
+
+    #  現在の階層から見た、対象のパッケージの階層の深さ。
+    #  index に戻るときの相対パスを生成するために使う。
+    #  (splitdir の戻り値は ARRAY。scalar で受け取ることで、個数が入る)
+    my $rel_depth = grep { $_ ne '' } File::Spec->splitdir($rel_path);
+
+    $p->pod_top( File::Spec->catfile(('..') x ($rel_depth), 'index.html') );
+    $p->release_top( File::Spec->catfile(('..') x ($rel_depth - 1), 'index.html' ) );
+    $p->release_name( $release_name );
 
     my $html;
     $p->output_string(\$html);
     $p->parse_file($path);
-    
-    my $rel_path = $path;
-    $rel_path =~ s/^$basedir//;
+
     my $outfile = File::Spec->catdir($outdir, $release_name, $rel_path);
     $outfile =~ s/\.(pm|pl)$/.html/;
 
-    print "Outfile $outfile\n";
     make_path_outfile($outfile);        
 
     open my $OUT, '>', $outfile 

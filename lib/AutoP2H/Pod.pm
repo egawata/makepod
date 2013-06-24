@@ -9,9 +9,9 @@ use Class::Accessor::Lite (
     new     => 0,
     rw      => [qw/
         pod_top
-        package_top
+        release_top
+        release_name
         package_name
-        module_name
     /]
 );
 
@@ -20,12 +20,14 @@ sub _add_top_anchor {
 
     $self->SUPER::_add_top_anchor($text_r);
 
+    $self->package_name( $self->{Title} ); # unless $self->package_name;
+
     #  Add breadlist
     $$text_r .= 
           q{<div class="breadlist">}
         . q{<a href="} . $self->pod_top . q{">TOP</a> }
-        . q{&gt <a href="} . $self->package_top . q{">} . $self->package_name . q{</a> }
-        . q{&gt } . $self->module_name
+        . q{&gt <a href="} . $self->release_top . q{">} . $self->release_name . q{</a> }
+        . q{&gt } . $self->package_name
         . q{</div>};
 
 }
