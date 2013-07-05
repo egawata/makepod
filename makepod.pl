@@ -5,7 +5,6 @@ use warnings;
 
 
 use File::Spec;
-use File::Temp qw/ tempfile /;
 
 my $libpath;
 
