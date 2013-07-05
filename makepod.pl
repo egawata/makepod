@@ -5,6 +5,7 @@ use warnings;
 
 
 use File::Spec;
+use File::Temp qw/ tempfile /;
 
 my $libpath;
 
@@ -69,15 +70,14 @@ my $watcher = File::ChangeNotify->instantiate_watcher(
                 );
 
 while ( my @events = $watcher->wait_for_events() ) {
-    
+   
     my %map = map { $_->path => 1 } grep { $_->type =~ m/^(create|modify)$/ } @events;
     my @paths = keys %map;
     for (@paths) {
         make_html($_);
     }
 
-    print "Finished. (sleep 5 seconds)\n";
-    sleep(5);
+    print "Finished.\n";
 }
 
 
@@ -117,11 +117,13 @@ sub make_html {
     my $outfile = File::Spec->catdir($outdir, $release_name, $rel_path);
     $outfile =~ s/\.(pm|pl)$/.html/;
 
-    make_path_outfile($outfile);        
+    my $tmpfile = $outfile . ".tmp";
+    open my $TMP, '>',  $tmpfile
+        or die "Failed to open temporary file $tmpfile : $!";
+    print $TMP decode_entities($html);
+    close $TMP;
 
-    open my $OUT, '>', $outfile 
-        or die "Failed to open file $outfile : $!\n";
-    print $OUT decode_entities($html);
-    close $OUT;
+    make_path_outfile($outfile);        
+    rename $tmpfile, $outfile;
 }
 
