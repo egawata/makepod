@@ -26,6 +26,7 @@ use HTML::Entities;
 use Data::Dumper;
 use AutoP2H::Pod;
 use Pod::Simple::Search;
+use File::Basename;
 
 
 $Pod::Simple::HTML::Content_decl = q{<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">};
@@ -113,7 +114,14 @@ sub make_html {
     $p->output_string(\$html);
     $p->parse_file($path);
 
-    my $outfile = File::Spec->catdir($outdir, $release_name, $rel_path);
+    my $outfile = File::Spec->catfile($outdir, $release_name, $rel_path);
+    my $outfile_dir = dirname($outfile);
+    -d $outfile_dir or make_path( $outfile_dir, { error => \my $err } );
+    if ( $err and @$err ) {
+        warn $_ for ( @$err );
+        die "Failed to create directory $outfile_dir : ";
+    }
+
     $outfile =~ s/\.(pm|pl)$/.html/;
 
     my $tmpfile = $outfile . ".tmp";
