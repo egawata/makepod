@@ -2,7 +2,7 @@ BODY {
   background: white;
   color: black;
   font-family: arial,sans-serif;
-  font-size: 14px;
+  font-size: 12px;
   margin: 0;
   padding: 1ex;
 }
@@ -35,35 +35,50 @@ TH A:link, TH A:visited {
 }
 
 PRE     {
-  background: #dddddd;
-  border: 1px solid black;
+  background: #ddddff;
+  border: 1px solid #666666;
   color: black;
   padding-top: 1em;
   padding-bottom: 1em;
   white-space: pre;
+  margin: 10px 30px;
 }
 
 H1      {
   background: transparent;
   color: #006699;
-  font-size: x-large;
+  font-size: 20px;
+  margin-top: 20px;
 }
 
 H2      {
   background: transparent;
   color: #006699;
-  font-size: large;
+  font-size: 14px;
   margin-top: 20px;
 }
 
 H3 {
   background: transparent;
   color: #006699;
-  font-size: medium;
+  font-size: 12px;
+  text-decoration: underline;
 }
 
 LI {
   line-height: 1.2em;
   list-style-type: square;
 }
- 
+
+a {
+  color: #6666ff;
+  text-decoration:none;    
+}
+
+a.hover {
+  color: #ff3333;
+}
+
+p {
+  margin: 0px 20px;
+}
